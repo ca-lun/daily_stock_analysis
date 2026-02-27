@@ -317,8 +317,11 @@ class Config:
 
         # === 智能代理配置 (关键修复) ===
         # 如果配置了代理，自动设置 NO_PROXY 以排除国内数据源，避免行情获取失败
+        # 对于海外服务器，强制所有流量走代理时，可设置 AUTO_NO_PROXY=false
         http_proxy = os.getenv('HTTP_PROXY') or os.getenv('http_proxy')
-        if http_proxy:
+        auto_no_proxy = os.getenv('AUTO_NO_PROXY', 'true').lower() == 'true'
+        
+        if http_proxy and auto_no_proxy:
             # 国内金融数据源域名列表
             domestic_domains = [
                 'eastmoney.com',   # 东方财富 (Efinance/Akshare)
@@ -346,16 +349,16 @@ class Config:
             os.environ['NO_PROXY'] = final_no_proxy
             os.environ['no_proxy'] = final_no_proxy
 
-            # 确保 HTTP_PROXY 也被正确设置（以防仅在 .env 中定义但未导出）
+        # 为了确保 HTTP_PROXY 被正确设置
+        if http_proxy:
             os.environ['HTTP_PROXY'] = http_proxy
             os.environ['http_proxy'] = http_proxy
 
-            # HTTPS_PROXY 同理
-            https_proxy = os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
-            if https_proxy:
-                os.environ['HTTPS_PROXY'] = https_proxy
-                os.environ['https_proxy'] = https_proxy
-
+        # HTTPS_PROXY 同理
+        https_proxy = os.getenv('HTTPS_PROXY') or os.getenv('https_proxy')
+        if https_proxy:
+            os.environ['HTTPS_PROXY'] = https_proxy
+            os.environ['https_proxy'] = https_proxy
         
         # 解析自选股列表（逗号分隔，统一为大写 Issue #355）
         stock_list_str = os.getenv('STOCK_LIST', '')
